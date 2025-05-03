@@ -95,7 +95,7 @@ export const updateUser = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    
+    const userData = userDoc.data() as User;
     const updateData: Partial<User> = {
       ...(name && { name }),
       ...(email && { email }),
@@ -103,14 +103,13 @@ export const updateUser = async (req: Request, res: Response) => {
       ...(status && { status }),
     };
 
-    
-    if (password) {
-      const salt = await bcrypt.genSalt(10); 
-      const hashedPassword = await bcrypt.hash(password, salt); 
-      updateData.password = hashedPassword; 
+    // Solo actualizar la contraseña si es diferente al hash almacenado
+    if (password && password !== userData.password) {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(password, salt);
+      updateData.password = hashedPassword;
     }
 
-    
     await userDoc.ref.update(updateData);
 
     res.status(200).json({ message: 'Usuario actualizado correctamente' });
